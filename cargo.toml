@@ -4,4 +4,5 @@ members = [
     "day2"
 ]
 
-#[workspace.dependencies]
+[workspace.dependencies]
+anyhow = "1.0"
