@@ -1,31 +1,17 @@
 use std::collections::HashSet;
 use std::str::FromStr;
 
-use anyhow::{Error, Result};
-
 use crate::Supply;
 
 #[derive(Clone)]
-pub struct Rucksack(pub Compartment, pub Compartment);
-
-#[derive(Clone)]
-pub struct Compartment {
-    pub supplies: HashSet<Supply>,
+pub struct Rucksack {
+    supplies: Vec<Supply>,
 }
 
 impl FromStr for Rucksack {
-    type Err = Error;
+    type Err = ();
 
-    fn from_str(input: &str) -> Result<Self> {
-        let split = input.len() / 2;
-        Ok(Self(input[0..split].parse()?, input[split..].parse()?))
-    }
-}
-
-impl FromStr for Compartment {
-    type Err = Error;
-
-    fn from_str(input: &str) -> Result<Self> {
+    fn from_str(input: &str) -> Result<Self, Self::Err> {
         let supplies = input.chars().map(Supply::new).collect();
         Ok(Self { supplies })
     }
@@ -33,20 +19,18 @@ impl FromStr for Compartment {
 
 impl Rucksack {
     pub fn error(&self) -> Supply {
-        let Self(first_compartment, second_compartment) = self;
+        let split = self.supplies.len() / 2;
+        let first_compartment: HashSet<_> = self.supplies.iter().copied().take(split).collect();
+        let second_compartment: HashSet<_> = self.supplies.iter().copied().skip(split).collect();
         *first_compartment
-            .supplies
-            .intersection(&second_compartment.supplies)
+            .intersection(&second_compartment)
             .next()
             .unwrap()
     }
 }
 
-#[allow(clippy::implicit_hasher)]
 impl From<Rucksack> for HashSet<Supply> {
-    fn from(Rucksack(c1, c2): Rucksack) -> Self {
-        let mut supplies = c1.supplies;
-        supplies.extend(c2.supplies);
-        supplies
+    fn from(rucksack: Rucksack) -> Self {
+        rucksack.supplies.into_iter().collect()
     }
 }

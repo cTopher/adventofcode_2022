@@ -4,7 +4,6 @@ mod shape;
 use outcome::Outcome;
 use shape::Shape;
 
-use anyhow::{Error, Result};
 use std::str::FromStr;
 
 struct EncryptedStrategyGuide {
@@ -12,9 +11,9 @@ struct EncryptedStrategyGuide {
 }
 
 impl FromStr for EncryptedStrategyGuide {
-    type Err = Error;
+    type Err = ();
 
-    fn from_str(input: &str) -> Result<Self> {
+    fn from_str(input: &str) -> Result<Self, Self::Err> {
         let rounds = input
             .trim()
             .lines()
@@ -54,14 +53,18 @@ impl EncryptedStrategyGuide {
     }
 }
 
-pub fn part_1(input: &str) -> Result<u32> {
-    let guide = EncryptedStrategyGuide::from_str(input)?;
-    Ok(guide.assumed_score())
+#[must_use]
+pub fn part_1(input: &str) -> u32 {
+    EncryptedStrategyGuide::from_str(input)
+        .unwrap()
+        .assumed_score()
 }
 
-pub fn part_2(input: &str) -> Result<u32> {
-    let guide = EncryptedStrategyGuide::from_str(input)?;
-    Ok(guide.real_score())
+#[must_use]
+pub fn part_2(input: &str) -> u32 {
+    EncryptedStrategyGuide::from_str(input)
+        .unwrap()
+        .real_score()
 }
 
 #[cfg(test)]
@@ -72,26 +75,22 @@ mod tests {
     const INPUT: &str = include_str!("../input.txt");
 
     #[test]
-    fn part_1_example() -> Result<()> {
-        assert_eq!(15, part_1(EXAMPLE)?);
-        Ok(())
+    fn part_1_example() {
+        assert_eq!(15, part_1(EXAMPLE));
     }
 
     #[test]
-    fn part_1_input() -> Result<()> {
-        assert_eq!(14375, part_1(INPUT)?);
-        Ok(())
+    fn part_1_input() {
+        assert_eq!(14375, part_1(INPUT));
     }
 
     #[test]
-    fn part_2_example() -> Result<()> {
-        assert_eq!(12, part_2(EXAMPLE)?);
-        Ok(())
+    fn part_2_example() {
+        assert_eq!(12, part_2(EXAMPLE));
     }
 
     #[test]
-    fn part_2_input() -> Result<()> {
-        assert_eq!(10274, part_2(INPUT)?);
-        Ok(())
+    fn part_2_input() {
+        assert_eq!(10274, part_2(INPUT));
     }
 }

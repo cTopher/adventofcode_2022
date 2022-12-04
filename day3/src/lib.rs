@@ -5,34 +5,38 @@ use rucksack::Rucksack;
 use std::collections::HashSet;
 use supply::Supply;
 
-use std::str::FromStr;
-
-use anyhow::Result;
-
-fn parse_rucksacks(input: &str) -> Result<Vec<Rucksack>> {
-    input.trim().lines().map(Rucksack::from_str).collect()
+fn parse_rucksacks(input: &str) -> impl Iterator<Item = Rucksack> + '_ {
+    input.trim().lines().map(|line| line.parse().unwrap())
 }
 
-pub fn part_1(input: &str) -> Result<u32> {
-    Ok(parse_rucksacks(input)?
-        .iter()
+#[must_use]
+pub fn part_1(input: &str) -> u32 {
+    parse_rucksacks(input)
         .map(|rucksack| rucksack.error().priority())
-        .sum())
+        .sum()
 }
 
-pub fn part_2(input: &str) -> Result<u32> {
-    Ok(parse_rucksacks(input)?
-        .chunks(3)
-        .map(|group| {
-            let badge = group
-                .iter()
-                .cloned()
-                .map(HashSet::from)
-                .reduce(|overlap, sack| overlap.intersection(&sack).copied().collect())
-                .unwrap();
-            badge.into_iter().next().unwrap().priority()
-        })
-        .sum())
+#[must_use]
+pub fn part_2(input: &str) -> u32 {
+    let mut sum = 0;
+    let mut rucksacks = parse_rucksacks(input);
+    loop {
+        let first = match rucksacks.next() {
+            None => return sum,
+            Some(sack) => HashSet::from(sack),
+        };
+        let second = rucksacks.next().unwrap().into();
+        let third = rucksacks.next().unwrap().into();
+        let badge = first
+            .intersection(&second)
+            .copied()
+            .collect::<HashSet<_>>()
+            .intersection(&third)
+            .next()
+            .unwrap()
+            .priority();
+        sum += badge;
+    }
 }
 
 #[cfg(test)]
@@ -43,26 +47,22 @@ mod tests {
     const INPUT: &str = include_str!("../input.txt");
 
     #[test]
-    fn part_1_example() -> Result<()> {
-        assert_eq!(157, part_1(EXAMPLE)?);
-        Ok(())
+    fn part_1_example() {
+        assert_eq!(157, part_1(EXAMPLE));
     }
 
     #[test]
-    fn part_1_input() -> Result<()> {
-        assert_eq!(7793, part_1(INPUT)?);
-        Ok(())
+    fn part_1_input() {
+        assert_eq!(7793, part_1(INPUT));
     }
 
     #[test]
-    fn part_2_example() -> Result<()> {
-        assert_eq!(70, part_2(EXAMPLE)?);
-        Ok(())
+    fn part_2_example() {
+        assert_eq!(70, part_2(EXAMPLE));
     }
 
     #[test]
-    fn part_2_input() -> Result<()> {
-        assert_eq!(2499, part_2(INPUT)?);
-        Ok(())
+    fn part_2_input() {
+        assert_eq!(2499, part_2(INPUT));
     }
 }

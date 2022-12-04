@@ -1,7 +1,5 @@
 use std::str::FromStr;
 
-use anyhow::{Error, Result};
-
 use crate::FoodItem;
 
 pub struct Elv {
@@ -9,13 +7,10 @@ pub struct Elv {
 }
 
 impl FromStr for Elv {
-    type Err = Error;
+    type Err = ();
 
-    fn from_str(input: &str) -> Result<Self> {
-        let inventory = input
-            .lines()
-            .map(FoodItem::from_str)
-            .collect::<Result<_>>()?;
+    fn from_str(input: &str) -> Result<Self, Self::Err> {
+        let inventory = input.lines().map(|line| line.parse().unwrap()).collect();
         Ok(Self { inventory })
     }
 }

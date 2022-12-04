@@ -1,4 +1,3 @@
-use anyhow::{Error, Result};
 use std::str::FromStr;
 
 #[derive(Copy, Clone)]
@@ -7,10 +6,10 @@ pub struct FoodItem {
 }
 
 impl FromStr for FoodItem {
-    type Err = Error;
+    type Err = ();
 
-    fn from_str(input: &str) -> Result<Self> {
-        let calories = input.parse()?;
+    fn from_str(input: &str) -> Result<Self, Self::Err> {
+        let calories = input.parse().unwrap();
         Ok(Self { calories })
     }
 }
