@@ -27,10 +27,8 @@ impl Rucksack {
             .next()
             .unwrap()
     }
-}
 
-impl From<Rucksack> for HashSet<Supply> {
-    fn from(rucksack: Rucksack) -> Self {
-        rucksack.supplies.into_iter().collect()
+    pub fn into_set(self) -> HashSet<Supply> {
+        self.supplies.into_iter().collect()
     }
 }

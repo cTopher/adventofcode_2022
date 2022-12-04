@@ -23,10 +23,10 @@ pub fn part_2(input: &str) -> u32 {
     loop {
         let first = match rucksacks.next() {
             None => return sum,
-            Some(sack) => HashSet::from(sack),
+            Some(sack) => sack.into_set(),
         };
-        let second = rucksacks.next().unwrap().into();
-        let third = rucksacks.next().unwrap().into();
+        let second = rucksacks.next().unwrap().into_set();
+        let third = rucksacks.next().unwrap().into_set();
         let badge = first
             .intersection(&second)
             .copied()
