@@ -4,10 +4,13 @@ fn find_marker(input: &str, start_marker_size: usize) -> usize {
     input
         .as_bytes()
         .windows(start_marker_size)
-        .map(|window| window.iter().copied().collect::<HashSet<_>>().len())
-        .position(|len| len == start_marker_size)
+        .position(all_different)
         .unwrap()
         + start_marker_size
+}
+
+fn all_different(slice: &[u8]) -> bool {
+    slice.len() == slice.iter().copied().collect::<HashSet<_>>().len()
 }
 
 #[must_use]
