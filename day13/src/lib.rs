@@ -8,14 +8,16 @@ const SEPARATOR: &str = "\r\n\r\n";
 #[cfg(not(target_os = "windows"))]
 const SEPARATOR: &str = "\n\n";
 
+fn parse_pair(s: &str) -> (Packet, Packet) {
+    let mut pair = s.lines().map(|line| line.parse().unwrap());
+    (pair.next().unwrap(), pair.next().unwrap())
+}
+
 #[must_use]
 pub fn part_1(input: &str) -> usize {
     input
         .split(SEPARATOR)
-        .map(|s| {
-            let mut pair = s.lines().map(|line| line.parse::<Packet>().unwrap());
-            (pair.next().unwrap(), pair.next().unwrap())
-        })
+        .map(parse_pair)
         .enumerate()
         .filter(|(_, (left, right))| left < right)
         .map(|(index, _)| index + 1)
@@ -25,11 +27,11 @@ pub fn part_1(input: &str) -> usize {
 #[must_use]
 pub fn part_2(input: &str) -> usize {
     let mut packets: Vec<Packet> = input
-        .replace(SEPARATOR, "\n")
         .lines()
+        .filter(|line| !line.is_empty())
         .map(|line| line.parse().unwrap())
         .collect();
-    let dividers = ["[[2]]".parse().unwrap(), "[[6]]".parse().unwrap()];
+    let dividers = ["[[2]]", "[[6]]"].map(|s| s.parse().unwrap());
     packets.extend(dividers.clone());
     packets.sort();
     dividers

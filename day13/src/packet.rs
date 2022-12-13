@@ -1,6 +1,5 @@
 use std::cmp::Ordering;
 use std::convert::Infallible;
-use std::fmt;
 use std::iter::Peekable;
 use std::str::{Chars, FromStr};
 
@@ -8,24 +7,6 @@ use std::str::{Chars, FromStr};
 pub enum Packet {
     List(Vec<Self>),
     Integer(u32),
-}
-
-impl fmt::Display for Packet {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            Self::List(list) => {
-                write!(f, "[")?;
-                for (index, data) in list.iter().enumerate() {
-                    if index > 0 {
-                        write!(f, ", ")?;
-                    }
-                    write!(f, "{}", data)?;
-                }
-                write!(f, "]")
-            }
-            Self::Integer(integer) => write!(f, "{integer}"),
-        }
-    }
 }
 
 impl Ord for Packet {
