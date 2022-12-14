@@ -26,18 +26,22 @@ pub fn part_1(input: &str) -> usize {
 
 #[must_use]
 pub fn part_2(input: &str) -> usize {
-    let mut packets: Vec<Packet> = input
+    let packets: Vec<Packet> = input
         .lines()
         .filter(|line| !line.is_empty())
         .map(|line| line.parse().unwrap())
         .collect();
-    let dividers = ["[[2]]", "[[6]]"].map(|s| s.parse().unwrap());
-    packets.extend(dividers.clone());
-    packets.sort();
-    dividers
+    let divider_1 = packets
         .iter()
-        .map(|divider| packets.iter().position(|packet| packet == divider).unwrap() + 1)
-        .product()
+        .filter(|&packet| packet < &Packet::Integer(2))
+        .count()
+        + 1;
+    let divider_2 = packets
+        .iter()
+        .filter(|&packet| packet < &Packet::Integer(6))
+        .count()
+        + 2;
+    divider_1 * divider_2
 }
 
 #[cfg(test)]
