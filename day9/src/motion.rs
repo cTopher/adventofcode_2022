@@ -23,7 +23,7 @@ impl FromStr for Direction {
             "D" => Ok(Self::Down),
             "L" => Ok(Self::Left),
             "R" => Ok(Self::Right),
-            _ => panic!("Invalid direction: {}", input),
+            _ => panic!("Invalid direction: {input}"),
         }
     }
 }

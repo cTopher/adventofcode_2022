@@ -28,7 +28,7 @@ impl fmt::Display for Crt {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         for row in self.pixels.chunks(40) {
             for pixel in row {
-                write!(f, "{}", pixel)?;
+                write!(f, "{pixel}")?;
             }
             writeln!(f)?;
         }

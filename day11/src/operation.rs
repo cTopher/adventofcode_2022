@@ -33,7 +33,7 @@ impl FromStr for Operation {
                 Self::Multiply(value.parse().unwrap())
             }
         } else {
-            panic!("Unknown operation: {}", input);
+            panic!("Unknown operation: {input}");
         })
     }
 }
