@@ -19,8 +19,8 @@ impl Sensor {
         }
     }
 
-    pub const fn border_contains(&self, coordinate: Coordinate) -> bool {
-        self.position.distance_to(coordinate) == self.range + 1
+    pub const fn can_see(&self, coordinate: Coordinate) -> bool {
+        self.position.distance_to(coordinate) <= self.range
     }
 }
 

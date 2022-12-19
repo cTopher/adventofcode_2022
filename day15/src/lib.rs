@@ -19,7 +19,6 @@ pub fn part_1(input: &str, y: i64) -> u64 {
     coverage.size()
 }
 
-
 /// this is some fugly shit but oh well... the math behind it is mostly correct though :p
 #[must_use]
 pub fn part_2(input: &str, max: i64) -> i64 {
@@ -42,7 +41,7 @@ pub fn part_2(input: &str, max: i64) -> i64 {
         .filter(|(_, amount)| *amount > 1)
         .map(|(y0, _)| y0)
         .collect();
-    let mut options: Vec<_> = down
+    let options: Vec<_> = down
         .iter()
         .flat_map(|down| {
             up.iter().map(move |up| {
@@ -51,15 +50,16 @@ pub fn part_2(input: &str, max: i64) -> i64 {
                 Coordinate { x, y }
             })
         })
-        .filter(|&c| c.x >= 0 && c.y >= 0 && c.x <= max && c.y <= max)
-        .map(|c| {
-            let count = sensors.iter().filter(|s| s.border_contains(c)).count();
-            (c, count)
+        .filter(|&c| {
+            c.x >= 0
+                && c.y >= 0
+                && c.x <= max
+                && c.y <= max
+                && sensors.iter().all(|s| !s.can_see(c))
         })
         .collect();
-    options.sort_unstable_by_key(|(_, count)| *count);
-    let &(position, _) = options.last().unwrap();
-    tuning_frequency(position)
+    assert_eq!(options.len(), 1);
+    tuning_frequency(*options.first().unwrap())
 }
 
 #[cfg(test)]
@@ -86,6 +86,6 @@ mod tests {
 
     #[test]
     fn part_2_input() {
-        assert_eq!(0, part_2(INPUT, 4_000_000));
+        assert_eq!(13_171_855_019_123, part_2(INPUT, 4_000_000));
     }
 }
