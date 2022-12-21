@@ -1,15 +1,17 @@
-fn parse_(input: &str) -> impl Iterator<Item = &str> + '_ {
-    input.trim().lines()
+use crate::volcano::Volcano;
+
+mod volcano;
+
+#[must_use]
+pub fn part_1(input: &str) -> u32 {
+    let volcano: Volcano = input.parse().unwrap();
+    volcano.max_pressure(30)
 }
 
 #[must_use]
-pub fn part_1(input: &str) -> usize {
-    parse_(input).count()
-}
-
-#[must_use]
-pub fn part_2(input: &str) -> usize {
-    parse_(input).count()
+pub fn part_2(input: &str) -> u32 {
+    let volcano: Volcano = input.parse().unwrap();
+    volcano.max_pressure(30)
 }
 
 #[cfg(test)]
@@ -21,7 +23,7 @@ mod tests {
 
     #[test]
     fn part_1_example() {
-        assert_eq!(0, part_1(EXAMPLE));
+        assert_eq!(1651, part_1(EXAMPLE));
     }
 
     #[test]
