@@ -74,7 +74,7 @@ impl Volcano {
         }
     }
 
-    pub fn max_pressure(&self, duration: u32) -> u32 {
+    pub fn pressures(&self, duration: u32) -> Vec<u32> {
         let mut pressure = vec![0; 2usize.pow(u32::try_from(self.start_distances.len()).unwrap())];
         let mut paths = self.start_paths(duration);
         while let Some(path) = paths.pop() {
@@ -96,7 +96,7 @@ impl Volcano {
                 }
             }
         }
-        pressure.into_iter().max().unwrap()
+        pressure
     }
 
     fn start_paths(&self, duration: u32) -> Vec<Path> {
