@@ -1,91 +1,70 @@
-use std::collections::VecDeque;
 use std::convert::Infallible;
-use std::fmt::Display;
 use std::str::FromStr;
 
-#[derive(Debug)]
 pub struct File {
-    enumeration: VecDeque<(usize, isize)>,
+    entries: Vec<Entry>,
+    zero: usize,
+}
+
+struct Entry {
+    next: usize,
+    prev: usize,
+    number: i64,
 }
 
 impl File {
-    pub fn decrypt(&mut self) {
-        let mut pointer = 0;
-        for index in 0..self.enumeration.len() {
-            while self.enumeration[pointer].0 != index {
-                pointer += 1;
-            }
-            self.mix_at(pointer);
+    pub fn decrypt(&mut self, key: i64) {
+        for entry in &mut self.entries {
+            entry.number *= key;
+        }
+        for _ in 0..10 {
+            self.mix();
         }
     }
 
-    pub fn get(&self, index: usize) -> isize {
-        let (_, value) = self.enumeration[index % self.enumeration.len()];
-        value
-    }
-
-    fn mix_at(&mut self, mut pointer: usize) {
-        let (_, amount) = self.enumeration[pointer];
-        let amount = amount % (self.signed_len() - 1);
-        if amount < 0 {
-            for _ in amount..0 {
-                match pointer {
-                    0 => {
-                        let front = self.enumeration.pop_front().unwrap();
-                        self.enumeration.push_back(front);
-                        pointer = self.last_index() - 1;
-                        self.enumeration.swap(pointer, pointer + 1);
-                    }
-                    1 => {
-                        self.enumeration.swap(0, 1);
-                        let front = self.enumeration.pop_front().unwrap();
-                        self.enumeration.push_back(front);
-                        pointer = self.last_index();
-                    }
-                    _ => {
-                        self.enumeration.swap(pointer - 1, pointer);
-                        pointer -= 1;
-                    }
-                }
-            }
-        } else {
-            for _ in 0..amount {
-                if pointer == self.last_index() - 1 {
-                    self.enumeration.swap(pointer, pointer + 1);
-                    let back = self.enumeration.pop_back().unwrap();
-                    self.enumeration.push_front(back);
-                    pointer = 0;
-                } else {
-                    self.enumeration.swap(pointer, pointer + 1);
-                    pointer += 1;
-                }
-            }
+    pub fn mix(&mut self) {
+        for index in 0..self.entries.len() {
+            self.mix_single_entry(index);
         }
     }
-    pub fn position(&self, value: isize) -> usize {
-        self.enumeration
-            .iter()
-            .position(|(_, v)| *v == value)
-            .unwrap()
+
+    pub fn get(&self, index: usize) -> i64 {
+        let mut entry = &self.entries[self.zero];
+        for _ in 0..index % self.entries.len() {
+            entry = &self.entries[entry.next];
+        }
+        entry.number
     }
 
-    fn last_index(&self) -> usize {
-        self.enumeration.len() - 1
+    fn mix_single_entry(&mut self, pointer: usize) {
+        let max = i64::try_from(self.entries.len()).unwrap() - 1;
+        let amount = self.entries[pointer].number % max;
+        let mut target = pointer;
+        match amount {
+            amount if amount < 0 => {
+                for _ in amount..=0 {
+                    target = self.entries[target].prev;
+                }
+            }
+            amount if amount > 0 => {
+                for _ in 0..amount {
+                    target = self.entries[target].next;
+                }
+            }
+            _ => return,
+        }
+        self.move_entry(pointer, target);
     }
 
-    pub fn signed_len(&self) -> isize {
-        self.enumeration.len().try_into().unwrap()
-    }
-}
-
-impl Display for File {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let x: Vec<_> = self
-            .enumeration
-            .iter()
-            .map(|(_, value)| value.to_string())
-            .collect();
-        x.join(", ").fmt(f)
+    fn move_entry(&mut self, pointer: usize, target: usize) {
+        let Entry { prev, next, .. } = self.entries[pointer];
+        let new_next = self.entries[target].next;
+        self.entries[prev].next = next;
+        self.entries[next].prev = prev;
+        self.entries[target].next = pointer;
+        self.entries[pointer].prev = target;
+        self.entries[pointer].next = new_next;
+        self.entries[new_next].prev = pointer;
     }
 }
 
@@ -93,12 +72,25 @@ impl FromStr for File {
     type Err = Infallible;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let enumeration = s
-            .trim()
-            .lines()
-            .map(|line| line.parse().unwrap())
+        Ok(s.trim().lines().map(|line| line.parse().unwrap()).into())
+    }
+}
+
+#[allow(clippy::fallible_impl_from)]
+impl<I: IntoIterator<Item = i64>> From<I> for File {
+    fn from(iter: I) -> Self {
+        let numbers: Vec<_> = iter.into_iter().collect();
+        let last_index = numbers.len() - 1;
+        let entries: Vec<_> = numbers
+            .into_iter()
             .enumerate()
+            .map(|(index, number)| Entry {
+                next: if index == last_index { 0 } else { index + 1 },
+                prev: if index == 0 { last_index } else { index - 1 },
+                number,
+            })
             .collect();
-        Ok(Self { enumeration })
+        let zero = entries.iter().position(|entry| entry.number == 0).unwrap();
+        Self { entries, zero }
     }
 }

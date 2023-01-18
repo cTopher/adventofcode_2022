@@ -3,16 +3,17 @@ mod encryption;
 use encryption::File;
 
 #[must_use]
-pub fn part_1(input: &str) -> isize {
+pub fn part_1(input: &str) -> i64 {
     let mut file: File = input.parse().unwrap();
-    file.decrypt();
-    let zero = file.position(0);
-    file.get(zero + 1000) + file.get(zero + 2000) + file.get(zero + 3000)
+    file.mix();
+    file.get(1000) + file.get(2000) + file.get(3000)
 }
 
 #[must_use]
-pub fn part_2(input: &str) -> isize {
-    0
+pub fn part_2(input: &str) -> i64 {
+    let mut file: File = input.parse().unwrap();
+    file.decrypt(811_589_153);
+    file.get(1000) + file.get(2000) + file.get(3000)
 }
 
 #[cfg(test)]
@@ -29,17 +30,16 @@ mod tests {
 
     #[test]
     fn part_1_input() {
-        // not -8747
-        assert_eq!(0, part_1(INPUT));
+        assert_eq!(8764, part_1(INPUT));
     }
 
     #[test]
     fn part_2_example() {
-        assert_eq!(0, part_2(EXAMPLE));
+        assert_eq!(1_623_178_306, part_2(EXAMPLE));
     }
 
     #[test]
     fn part_2_input() {
-        assert_eq!(0, part_2(INPUT));
+        assert_eq!(535_648_840_980, part_2(INPUT));
     }
 }
