@@ -4,14 +4,14 @@ use encryption::File;
 
 #[must_use]
 pub fn part_1(input: &str) -> i64 {
-    let mut file: File = input.parse().unwrap();
+    let file: File = input.parse().unwrap();
     file.mix();
     file.get(1000) + file.get(2000) + file.get(3000)
 }
 
 #[must_use]
 pub fn part_2(input: &str) -> i64 {
-    let mut file: File = input.parse().unwrap();
+    let file: File = input.parse().unwrap();
     file.decrypt(811_589_153);
     file.get(1000) + file.get(2000) + file.get(3000)
 }

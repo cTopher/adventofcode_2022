@@ -1,70 +1,93 @@
 use std::convert::Infallible;
+use std::ptr;
 use std::str::FromStr;
 
 pub struct File {
-    entries: Vec<Entry>,
-    zero: usize,
+    entries: Vec<Link>,
+    zero: Link,
 }
 
+type Link = *mut Entry;
+
 struct Entry {
-    next: usize,
-    prev: usize,
+    next: Link,
+    prev: Link,
     number: i64,
 }
 
 impl File {
-    pub fn decrypt(&mut self, key: i64) {
-        for entry in &mut self.entries {
-            entry.number *= key;
+    pub fn decrypt(&self, key: i64) {
+        unsafe {
+            for &entry in &self.entries {
+                (*entry).number *= key;
+            }
         }
         for _ in 0..10 {
             self.mix();
         }
     }
 
-    pub fn mix(&mut self) {
-        for index in 0..self.entries.len() {
-            self.mix_single_entry(index);
+    pub fn mix(&self) {
+        let max = i64::try_from(self.entries.len()).unwrap() - 1;
+        unsafe {
+            for &entry in &self.entries {
+                Entry::mix(entry, (*entry).number % max);
+            }
         }
     }
 
     pub fn get(&self, index: usize) -> i64 {
-        let mut entry = &self.entries[self.zero];
-        for _ in 0..index % self.entries.len() {
-            entry = &self.entries[entry.next];
+        let mut entry = self.zero;
+        unsafe {
+            for _ in 0..index % self.entries.len() {
+                entry = (*entry).next;
+            }
+            (*entry).number
         }
-        entry.number
     }
+}
 
-    fn mix_single_entry(&mut self, pointer: usize) {
-        let max = i64::try_from(self.entries.len()).unwrap() - 1;
-        let amount = self.entries[pointer].number % max;
-        let mut target = pointer;
-        match amount {
-            amount if amount < 0 => {
+impl Entry {
+    fn mix(entry: Link, amount: i64) {
+        if amount == 0 {
+            return;
+        }
+        unsafe {
+            let mut target = entry;
+            if amount < 0 {
                 for _ in amount..=0 {
-                    target = self.entries[target].prev;
+                    target = (*target).prev;
                 }
-            }
-            amount if amount > 0 => {
+            } else {
                 for _ in 0..amount {
-                    target = self.entries[target].next;
+                    target = (*target).next;
                 }
             }
-            _ => return,
+            Self::move_to(entry, target);
         }
-        self.move_entry(pointer, target);
     }
 
-    fn move_entry(&mut self, pointer: usize, target: usize) {
-        let Entry { prev, next, .. } = self.entries[pointer];
-        let new_next = self.entries[target].next;
-        self.entries[prev].next = next;
-        self.entries[next].prev = prev;
-        self.entries[target].next = pointer;
-        self.entries[pointer].prev = target;
-        self.entries[pointer].next = new_next;
-        self.entries[new_next].prev = pointer;
+    #[allow(clippy::missing_const_for_fn)]
+    unsafe fn move_to(from: Link, target: Link) {
+        let Self { prev, next, .. } = *from;
+        let new_next = (*target).next;
+        (*prev).next = next;
+        (*next).prev = prev;
+        (*target).next = from;
+        (*from).prev = target;
+        (*from).next = new_next;
+        (*new_next).prev = from;
+    }
+}
+
+impl Drop for File {
+    fn drop(&mut self) {
+        unsafe {
+            self.zero = ptr::null_mut();
+            while let Some(entry) = self.entries.pop() {
+                drop(Box::from_raw(entry));
+            }
+        }
     }
 }
 
@@ -79,18 +102,26 @@ impl FromStr for File {
 #[allow(clippy::fallible_impl_from)]
 impl<I: IntoIterator<Item = i64>> From<I> for File {
     fn from(iter: I) -> Self {
-        let numbers: Vec<_> = iter.into_iter().collect();
-        let last_index = numbers.len() - 1;
-        let entries: Vec<_> = numbers
+        let mut entries: Vec<_> = iter
             .into_iter()
-            .enumerate()
-            .map(|(index, number)| Entry {
-                next: if index == last_index { 0 } else { index + 1 },
-                prev: if index == 0 { last_index } else { index - 1 },
-                number,
+            .map(|number| {
+                Box::into_raw(Box::new(Entry {
+                    next: ptr::null_mut(),
+                    prev: ptr::null_mut(),
+                    number,
+                }))
             })
             .collect();
-        let zero = entries.iter().position(|entry| entry.number == 0).unwrap();
-        Self { entries, zero }
+        let last_index = entries.len() - 1;
+        unsafe {
+            (*entries[0]).prev = entries[last_index];
+            (*entries[last_index]).next = entries[0];
+            for index in 0..last_index {
+                (*entries[index]).next = entries[index + 1];
+                (*entries[index + 1]).prev = entries[index];
+            }
+            let zero = *entries.iter().find(|&&entry| (*entry).number == 0).unwrap();
+            Self { entries, zero }
+        }
     }
 }
