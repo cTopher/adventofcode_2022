@@ -1,90 +1,73 @@
+use crate::Operation;
+use crate::Res;
 use std::collections::HashMap;
 use std::convert::Infallible;
 use std::str::FromStr;
 
-pub struct Monkeys {
-    map: HashMap<String, Monkey>,
+pub struct Troop {
+    monkeys: HashMap<String, Monkey>,
+    results: HashMap<String, Res>,
 }
 
-impl Monkeys {
-    pub fn result(&self, name: &str) -> i64 {
-        let mut deps = vec![self.map.get(name).unwrap()];
-        let mut results: HashMap<&str, i64> = HashMap::new();
-        while let Some(monkey) = deps.pop() {
-            if results.contains_key(monkey.name.as_str()) {
+impl Troop {
+    pub fn new(monkeys: HashMap<String, Monkey>) -> Self {
+        let results = HashMap::new();
+        Self { monkeys, results }
+    }
+
+    pub fn monkey(&self, name: &str) -> &Monkey {
+        self.monkeys.get(name).unwrap()
+    }
+
+    pub fn result(&mut self, name: &str) -> &Res {
+        let mut deps = vec![name.to_string()];
+        while let Some(name) = deps.pop() {
+            if self.results.contains_key(&name) {
                 continue;
             }
-            match &monkey.job {
+            match &self.monkey(&name).job {
                 Job::Number(n) => {
-                    results.insert(&monkey.name, *n);
+                    self.insert_result(name, Res::from(*n));
                 }
                 Job::MathOperation { left, right, op } => {
-                    let left_result = results.get(left.as_str());
-                    let right_result = results.get(right.as_str());
-                    if let (Some(&left), Some(&right)) = (left_result, right_result) {
-                        results.insert(&monkey.name, op.calculate(left, right));
+                    let left_result = self.results.get(left);
+                    let right_result = self.results.get(right);
+                    if let (Some(left), Some(right)) = (left_result, right_result) {
+                        self.insert_result(name, Res::new(*op, left.clone(), right.clone()));
                     } else {
-                        deps.push(monkey);
+                        deps.push(name);
                         if left_result.is_none() {
-                            deps.push(self.map.get(left).unwrap());
+                            deps.push(left.clone());
                         }
                         if right_result.is_none() {
-                            deps.push(self.map.get(right).unwrap());
+                            deps.push(right.clone());
                         }
                     }
                 }
             };
         }
-        *results.get(name).unwrap()
+        self.results.get(name).unwrap()
+    }
+
+    pub fn insert_result(&mut self, name: String, result: Res) {
+        self.results.insert(name, result);
     }
 }
 
 #[derive(Debug)]
-struct Monkey {
+pub struct Monkey {
     name: String,
-    job: Job,
+    pub job: Job,
 }
 
 #[derive(Debug)]
-enum Job {
+pub enum Job {
     Number(i64),
     MathOperation {
         left: String,
         right: String,
         op: Operation,
     },
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-enum Operation {
-    Add,
-    Sub,
-    Mul,
-    Div,
-}
-
-impl Operation {
-    const fn calculate(self, left: i64, right: i64) -> i64 {
-        match self {
-            Self::Add => left + right,
-            Self::Sub => left - right,
-            Self::Mul => left * right,
-            Self::Div => left / right,
-        }
-    }
-}
-
-impl FromStr for Operation {
-    type Err = Infallible;
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match s {
-            "+" => Ok(Self::Add),
-            "-" => Ok(Self::Sub),
-            "*" => Ok(Self::Mul),
-            "/" => Ok(Self::Div),
-            op => panic!("Unknown operation: {op}"),
-        }
-    }
 }
 
 impl FromStr for Job {
@@ -117,7 +100,7 @@ impl FromStr for Monkey {
     }
 }
 
-impl FromStr for Monkeys {
+impl FromStr for Troop {
     type Err = Infallible;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
@@ -129,6 +112,6 @@ impl FromStr for Monkeys {
                 (monkey.name.clone(), monkey)
             })
             .collect();
-        Ok(Self { map })
+        Ok(Self::new(map))
     }
 }
