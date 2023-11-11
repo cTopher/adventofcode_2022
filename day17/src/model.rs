@@ -34,7 +34,7 @@ impl Chamber {
         while self.dropped < amount {
             self.drop_rock();
             if self.rock_index == 0 {
-                let mut entry = &mut cycle[self.jet.index];
+                let entry = &mut cycle[self.jet.index];
                 if entry.start_dropped == 0 {
                     entry.start_dropped = self.dropped;
                     entry.start_height = self.height;

@@ -26,5 +26,6 @@ members = [
     "day24",
     "day25"
 ]
+resolver = "2"
 
 [workspace.dependencies]

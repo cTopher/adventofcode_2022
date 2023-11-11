@@ -2,10 +2,6 @@ use packet::Packet;
 
 mod packet;
 
-#[cfg(target_os = "windows")]
-const SEPARATOR: &str = "\r\n\r\n";
-
-#[cfg(not(target_os = "windows"))]
 const SEPARATOR: &str = "\n\n";
 
 fn parse_pair(s: &str) -> (Packet, Packet) {
